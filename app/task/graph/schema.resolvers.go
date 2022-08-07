@@ -6,9 +6,30 @@ package graph
 import (
 	"context"
 	"fmt"
-	"gogo-graphql/graph/generated"
-	"gogo-graphql/graph/model"
+	"gogo-graphql/app/task/graph/generated"
+	"gogo-graphql/app/task/graph/model"
+	"gogo-graphql/app/task/graph/models"
 )
+
+// Author is the resolver for the author field.
+func (r *approachResolver) Author(ctx context.Context, obj *models.Approach) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// DetailList is the resolver for the detailList field.
+func (r *approachResolver) DetailList(ctx context.Context, obj *models.Approach) ([]model.ApproachDetail, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Task is the resolver for the task field.
+func (r *approachResolver) Task(ctx context.Context, obj *models.Approach) (*models.Task, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// TaskList is the resolver for the taskList field.
+func (r *meResolver) TaskList(ctx context.Context, obj *models.Me) ([]models.Task, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 // ApproachCreate is the resolver for the approachCreate field.
 func (r *mutationResolver) ApproachCreate(ctx context.Context, taskID string, input model.ApproachInput) (*model.ApproachPayload, error) {
@@ -41,7 +62,7 @@ func (r *queryResolver) CurrentTime(ctx context.Context) (*string, error) {
 }
 
 // TaskInfo is the resolver for the taskInfo field.
-func (r *queryResolver) TaskInfo(ctx context.Context, id string) (*model.Task, error) {
+func (r *queryResolver) TaskInfo(ctx context.Context, id string) (*models.Task, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -51,14 +72,30 @@ func (r *queryResolver) Search(ctx context.Context, term string) ([]model.Search
 }
 
 // Me is the resolver for the me field.
-func (r *queryResolver) Me(ctx context.Context) (*model.Me, error) {
+func (r *queryResolver) Me(ctx context.Context) (*models.Me, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
 // VoteChanged is the resolver for the voteChanged field.
-func (r *subscriptionResolver) VoteChanged(ctx context.Context, taskID string) (<-chan *model.Approach, error) {
+func (r *subscriptionResolver) VoteChanged(ctx context.Context, taskID string) (<-chan *models.Approach, error) {
 	panic(fmt.Errorf("not implemented"))
 }
+
+// ApproachList is the resolver for the approachList field.
+func (r *taskResolver) ApproachList(ctx context.Context, obj *models.Task) ([]models.Approach, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Author is the resolver for the author field.
+func (r *taskResolver) Author(ctx context.Context, obj *models.Task) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Approach returns generated.ApproachResolver implementation.
+func (r *Resolver) Approach() generated.ApproachResolver { return &approachResolver{r} }
+
+// Me returns generated.MeResolver implementation.
+func (r *Resolver) Me() generated.MeResolver { return &meResolver{r} }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -69,6 +106,12 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
+// Task returns generated.TaskResolver implementation.
+func (r *Resolver) Task() generated.TaskResolver { return &taskResolver{r} }
+
+type approachResolver struct{ *Resolver }
+type meResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+type taskResolver struct{ *Resolver }

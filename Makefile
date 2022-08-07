@@ -13,8 +13,22 @@ confirm:
 	@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]
 
 # ==================================================================================== #
+# RUNNER
+# ==================================================================================== #
+## run/graph: run the graphql application
+.PHONY: run/graph
+run/graph:
+	go run ./app/task
+
+# ==================================================================================== #
 # DEVELOPMENT
 # ==================================================================================== #
+
+## generate/graph: generate graphql code based on gqlgen.yml
+.PHONY: generate/graph
+generate/graph:
+	go run github.com/99designs/gqlgen generate
+
 
 ## set/env: set all key-val in .env to os environment variable
 .PHONY: set/env

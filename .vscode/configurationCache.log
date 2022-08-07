@@ -1,0 +1,1 @@
+{"buildTargets":["audit","confirm","db/migrations/new","db/migrations/up","db/psql","help","make","set/env","vendor"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

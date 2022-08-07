@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gogo-graphql/graph"
-	"gogo-graphql/graph/generated"
+	"gogo-graphql/app/task/graph"
+	"gogo-graphql/app/task/graph/generated"
 	"log"
 	"net/http"
 	"os"

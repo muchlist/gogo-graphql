@@ -4,6 +4,7 @@ package model
 
 import (
 	"fmt"
+	"gogo-graphql/app/task/graph/models"
 	"io"
 	"strconv"
 )
@@ -11,18 +12,6 @@ import (
 type SearchResultItem interface {
 	IsSearchResultItem()
 }
-
-type Approach struct {
-	ID         string            `json:"id"`
-	Content    string            `json:"content"`
-	Author     *User             `json:"author"`
-	DetailList []*ApproachDetail `json:"detailList"`
-	VoteCount  int               `json:"voteCount"`
-	Task       *Task             `json:"task"`
-	CreatedAt  string            `json:"createdAt"`
-}
-
-func (Approach) IsSearchResultItem() {}
 
 type ApproachDetail struct {
 	ID       string                 `json:"id"`
@@ -36,13 +25,13 @@ type ApproachDetailInput struct {
 }
 
 type ApproachInput struct {
-	Content    string                 `json:"content"`
-	DetailList []*ApproachDetailInput `json:"detailList"`
+	Content    string                `json:"content"`
+	DetailList []ApproachDetailInput `json:"detailList"`
 }
 
 type ApproachPayload struct {
-	Errors   []*UserError `json:"errors"`
-	Approach *Approach    `json:"approach"`
+	Errors   []UserError      `json:"errors"`
+	Approach *models.Approach `json:"approach"`
 }
 
 // true for up-vote and false for down-vote
@@ -51,33 +40,14 @@ type ApproachVoteInput struct {
 }
 
 type ApproachVotePayload struct {
-	Errors   []*UserError `json:"errors"`
-	Approach *Approach    `json:"approach"`
+	Errors   []UserError     `json:"errors"`
+	Approach models.Approach `json:"approach"`
 }
 
 type AuthInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
-
-type Me struct {
-	ID       string  `json:"id"`
-	Username *string `json:"username"`
-	Name     string  `json:"name"`
-	TaskList []*Task `json:"taskList"`
-}
-
-type Task struct {
-	ID            string      `json:"id"`
-	Content       string      `json:"content"`
-	Tags          []string    `json:"tags"`
-	ApproachList  []*Approach `json:"approachList"`
-	ApproachCount int         `json:"approachCount"`
-	Author        *User       `json:"author"`
-	CreatedAt     string      `json:"createdAt"`
-}
-
-func (Task) IsSearchResultItem() {}
 
 type TaskInput struct {
 	Content   string  `json:"content"`
@@ -86,8 +56,8 @@ type TaskInput struct {
 }
 
 type TaskPayload struct {
-	Errors []*UserError `json:"errors"`
-	Task   *Task        `json:"task"`
+	Errors []UserError  `json:"errors"`
+	Task   *models.Task `json:"task"`
 }
 
 type User struct {
@@ -109,9 +79,9 @@ type UserInput struct {
 }
 
 type UserPayload struct {
-	Errors    []*UserError `json:"errors"`
-	User      *User        `json:"user"`
-	AuthToken *string      `json:"authToken"`
+	Errors    []UserError `json:"errors"`
+	User      *User       `json:"user"`
+	AuthToken *string     `json:"authToken"`
 }
 
 type ApproachDetailCategory string

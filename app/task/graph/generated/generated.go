@@ -7,7 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gogo-graphql/graph/model"
+	"gogo-graphql/app/task/graph/model"
+	"gogo-graphql/app/task/graph/models"
 	"io"
 	"strconv"
 	"sync"
@@ -37,9 +38,12 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Approach() ApproachResolver
+	Me() MeResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
+	Task() TaskResolver
 }
 
 type DirectiveRoot struct {
@@ -130,6 +134,15 @@ type ComplexityRoot struct {
 	}
 }
 
+type ApproachResolver interface {
+	Author(ctx context.Context, obj *models.Approach) (*model.User, error)
+	DetailList(ctx context.Context, obj *models.Approach) ([]model.ApproachDetail, error)
+
+	Task(ctx context.Context, obj *models.Approach) (*models.Task, error)
+}
+type MeResolver interface {
+	TaskList(ctx context.Context, obj *models.Me) ([]models.Task, error)
+}
 type MutationResolver interface {
 	ApproachCreate(ctx context.Context, taskID string, input model.ApproachInput) (*model.ApproachPayload, error)
 	ApproachVote(ctx context.Context, approachID string, input model.ApproachVoteInput) (*model.ApproachVotePayload, error)
@@ -139,12 +152,17 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	CurrentTime(ctx context.Context) (*string, error)
-	TaskInfo(ctx context.Context, id string) (*model.Task, error)
+	TaskInfo(ctx context.Context, id string) (*models.Task, error)
 	Search(ctx context.Context, term string) ([]model.SearchResultItem, error)
-	Me(ctx context.Context) (*model.Me, error)
+	Me(ctx context.Context) (*models.Me, error)
 }
 type SubscriptionResolver interface {
-	VoteChanged(ctx context.Context, taskID string) (<-chan *model.Approach, error)
+	VoteChanged(ctx context.Context, taskID string) (<-chan *models.Approach, error)
+}
+type TaskResolver interface {
+	ApproachList(ctx context.Context, obj *models.Task) ([]models.Approach, error)
+
+	Author(ctx context.Context, obj *models.Task) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -750,7 +768,7 @@ func (ec *executionContext) field_Mutation_approachCreate_args(ctx context.Conte
 	var arg1 model.ApproachInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNApproachInput2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachInput(ctx, tmp)
+		arg1, err = ec.unmarshalNApproachInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -774,7 +792,7 @@ func (ec *executionContext) field_Mutation_approachVote_args(ctx context.Context
 	var arg1 model.ApproachVoteInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNApproachVoteInput2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachVoteInput(ctx, tmp)
+		arg1, err = ec.unmarshalNApproachVoteInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachVoteInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -789,7 +807,7 @@ func (ec *executionContext) field_Mutation_taskCreate_args(ctx context.Context, 
 	var arg0 model.TaskInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTaskInput2gogoᚑgraphqlᚋgraphᚋmodelᚐTaskInput(ctx, tmp)
+		arg0, err = ec.unmarshalNTaskInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐTaskInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -804,7 +822,7 @@ func (ec *executionContext) field_Mutation_userCreate_args(ctx context.Context, 
 	var arg0 model.UserInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUserInput2gogoᚑgraphqlᚋgraphᚋmodelᚐUserInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUserInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -819,7 +837,7 @@ func (ec *executionContext) field_Mutation_userLogin_args(ctx context.Context, r
 	var arg0 model.AuthInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAuthInput2gogoᚑgraphqlᚋgraphᚋmodelᚐAuthInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAuthInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐAuthInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -926,7 +944,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Approach_id(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_id(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -970,7 +988,7 @@ func (ec *executionContext) fieldContext_Approach_id(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_content(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_content(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1014,7 +1032,7 @@ func (ec *executionContext) fieldContext_Approach_content(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_author(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_author(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_author(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1028,7 +1046,7 @@ func (ec *executionContext) _Approach_author(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.Approach().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1042,15 +1060,15 @@ func (ec *executionContext) _Approach_author(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Approach_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Approach",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1066,7 +1084,7 @@ func (ec *executionContext) fieldContext_Approach_author(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_detailList(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_detailList(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_detailList(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1080,7 +1098,7 @@ func (ec *executionContext) _Approach_detailList(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DetailList, nil
+		return ec.resolvers.Approach().DetailList(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1092,17 +1110,17 @@ func (ec *executionContext) _Approach_detailList(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ApproachDetail)
+	res := resTmp.([]model.ApproachDetail)
 	fc.Result = res
-	return ec.marshalNApproachDetail2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailᚄ(ctx, field.Selections, res)
+	return ec.marshalNApproachDetail2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Approach_detailList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Approach",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1118,7 +1136,7 @@ func (ec *executionContext) fieldContext_Approach_detailList(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_voteCount(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_voteCount(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_voteCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1162,7 +1180,7 @@ func (ec *executionContext) fieldContext_Approach_voteCount(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_task(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_task(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_task(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1176,7 +1194,7 @@ func (ec *executionContext) _Approach_task(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Task, nil
+		return ec.resolvers.Approach().Task(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1188,17 +1206,17 @@ func (ec *executionContext) _Approach_task(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Task)
+	res := resTmp.(*models.Task)
 	fc.Result = res
-	return ec.marshalNTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx, field.Selections, res)
+	return ec.marshalNTask2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Approach_task(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Approach",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1222,7 +1240,7 @@ func (ec *executionContext) fieldContext_Approach_task(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Approach_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Approach) (ret graphql.Marshaler) {
+func (ec *executionContext) _Approach_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Approach) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Approach_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1382,7 +1400,7 @@ func (ec *executionContext) _ApproachDetail_category(ctx context.Context, field 
 	}
 	res := resTmp.(model.ApproachDetailCategory)
 	fc.Result = res
-	return ec.marshalNApproachDetailCategory2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailCategory(ctx, field.Selections, res)
+	return ec.marshalNApproachDetailCategory2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ApproachDetail_category(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1424,9 +1442,9 @@ func (ec *executionContext) _ApproachPayload_errors(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserError)
+	res := resTmp.([]model.UserError)
 	fc.Result = res
-	return ec.marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserError2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ApproachPayload_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1469,9 +1487,9 @@ func (ec *executionContext) _ApproachPayload_approach(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Approach)
+	res := resTmp.(*models.Approach)
 	fc.Result = res
-	return ec.marshalOApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx, field.Selections, res)
+	return ec.marshalOApproach2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ApproachPayload_approach(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1529,9 +1547,9 @@ func (ec *executionContext) _ApproachVotePayload_errors(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserError)
+	res := resTmp.([]model.UserError)
 	fc.Result = res
-	return ec.marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserError2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ApproachVotePayload_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1577,9 +1595,9 @@ func (ec *executionContext) _ApproachVotePayload_approach(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Approach)
+	res := resTmp.(models.Approach)
 	fc.Result = res
-	return ec.marshalNApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx, field.Selections, res)
+	return ec.marshalNApproach2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ApproachVotePayload_approach(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1611,7 +1629,7 @@ func (ec *executionContext) fieldContext_ApproachVotePayload_approach(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Me_id(ctx context.Context, field graphql.CollectedField, obj *model.Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_id(ctx context.Context, field graphql.CollectedField, obj *models.Me) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Me_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1655,7 +1673,7 @@ func (ec *executionContext) fieldContext_Me_id(ctx context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _Me_username(ctx context.Context, field graphql.CollectedField, obj *model.Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_username(ctx context.Context, field graphql.CollectedField, obj *models.Me) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Me_username(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1696,7 +1714,7 @@ func (ec *executionContext) fieldContext_Me_username(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Me_name(ctx context.Context, field graphql.CollectedField, obj *model.Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_name(ctx context.Context, field graphql.CollectedField, obj *models.Me) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Me_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1740,7 +1758,7 @@ func (ec *executionContext) fieldContext_Me_name(ctx context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Me_taskList(ctx context.Context, field graphql.CollectedField, obj *model.Me) (ret graphql.Marshaler) {
+func (ec *executionContext) _Me_taskList(ctx context.Context, field graphql.CollectedField, obj *models.Me) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Me_taskList(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1754,7 +1772,7 @@ func (ec *executionContext) _Me_taskList(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TaskList, nil
+		return ec.resolvers.Me().TaskList(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1766,17 +1784,17 @@ func (ec *executionContext) _Me_taskList(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Task)
+	res := resTmp.([]models.Task)
 	fc.Result = res
-	return ec.marshalNTask2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTaskᚄ(ctx, field.Selections, res)
+	return ec.marshalNTask2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTaskᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Me_taskList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Me",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1825,7 +1843,7 @@ func (ec *executionContext) _Mutation_approachCreate(ctx context.Context, field 
 	}
 	res := resTmp.(*model.ApproachPayload)
 	fc.Result = res
-	return ec.marshalOApproachPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachPayload(ctx, field.Selections, res)
+	return ec.marshalOApproachPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_approachCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1883,7 +1901,7 @@ func (ec *executionContext) _Mutation_approachVote(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.ApproachVotePayload)
 	fc.Result = res
-	return ec.marshalOApproachVotePayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachVotePayload(ctx, field.Selections, res)
+	return ec.marshalOApproachVotePayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachVotePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_approachVote(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1941,7 +1959,7 @@ func (ec *executionContext) _Mutation_taskCreate(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.TaskPayload)
 	fc.Result = res
-	return ec.marshalOTaskPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTaskPayload(ctx, field.Selections, res)
+	return ec.marshalOTaskPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐTaskPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_taskCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1999,7 +2017,7 @@ func (ec *executionContext) _Mutation_userCreate(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.UserPayload)
 	fc.Result = res
-	return ec.marshalOUserPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserPayload(ctx, field.Selections, res)
+	return ec.marshalOUserPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_userCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2059,7 +2077,7 @@ func (ec *executionContext) _Mutation_userLogin(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.UserPayload)
 	fc.Result = res
-	return ec.marshalOUserPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserPayload(ctx, field.Selections, res)
+	return ec.marshalOUserPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_userLogin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2158,9 +2176,9 @@ func (ec *executionContext) _Query_taskInfo(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Task)
+	res := resTmp.(*models.Task)
 	fc.Result = res
-	return ec.marshalOTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTask2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_taskInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2231,7 +2249,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]model.SearchResultItem)
 	fc.Result = res
-	return ec.marshalNSearchResultItem2ᚕgogoᚑgraphqlᚋgraphᚋmodelᚐSearchResultItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNSearchResultItem2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐSearchResultItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2281,9 +2299,9 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Me)
+	res := resTmp.(*models.Me)
 	fc.Result = res
-	return ec.marshalOMe2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐMe(ctx, field.Selections, res)
+	return ec.marshalOMe2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐMe(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2466,7 +2484,7 @@ func (ec *executionContext) _Subscription_voteChanged(ctx context.Context, field
 	}
 	return func(ctx context.Context) graphql.Marshaler {
 		select {
-		case res, ok := <-resTmp.(<-chan *model.Approach):
+		case res, ok := <-resTmp.(<-chan *models.Approach):
 			if !ok {
 				return nil
 			}
@@ -2474,7 +2492,7 @@ func (ec *executionContext) _Subscription_voteChanged(ctx context.Context, field
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNApproach2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -2523,7 +2541,7 @@ func (ec *executionContext) fieldContext_Subscription_voteChanged(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2567,7 +2585,7 @@ func (ec *executionContext) fieldContext_Task_id(ctx context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_content(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_content(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2611,7 +2629,7 @@ func (ec *executionContext) fieldContext_Task_content(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_tags(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_tags(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2655,7 +2673,7 @@ func (ec *executionContext) fieldContext_Task_tags(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_approachList(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_approachList(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_approachList(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2669,7 +2687,7 @@ func (ec *executionContext) _Task_approachList(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ApproachList, nil
+		return ec.resolvers.Task().ApproachList(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2681,17 +2699,17 @@ func (ec *executionContext) _Task_approachList(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Approach)
+	res := resTmp.([]models.Approach)
 	fc.Result = res
-	return ec.marshalNApproach2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachᚄ(ctx, field.Selections, res)
+	return ec.marshalNApproach2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproachᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Task_approachList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Task",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2715,7 +2733,7 @@ func (ec *executionContext) fieldContext_Task_approachList(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_approachCount(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_approachCount(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_approachCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2759,7 +2777,7 @@ func (ec *executionContext) fieldContext_Task_approachCount(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_author(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_author(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_author(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2773,7 +2791,7 @@ func (ec *executionContext) _Task_author(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return ec.resolvers.Task().Author(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2787,15 +2805,15 @@ func (ec *executionContext) _Task_author(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Task_author(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Task",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2811,7 +2829,7 @@ func (ec *executionContext) fieldContext_Task_author(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Task_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+func (ec *executionContext) _Task_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Task) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Task_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2881,9 +2899,9 @@ func (ec *executionContext) _TaskPayload_errors(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserError)
+	res := resTmp.([]model.UserError)
 	fc.Result = res
-	return ec.marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserError2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TaskPayload_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2926,9 +2944,9 @@ func (ec *executionContext) _TaskPayload_task(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Task)
+	res := resTmp.(*models.Task)
 	fc.Result = res
-	return ec.marshalOTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTask2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TaskPayload_task(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3159,9 +3177,9 @@ func (ec *executionContext) _UserPayload_errors(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserError)
+	res := resTmp.([]model.UserError)
 	fc.Result = res
-	return ec.marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserError2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserErrorᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserPayload_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3206,7 +3224,7 @@ func (ec *executionContext) _UserPayload_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5070,7 +5088,7 @@ func (ec *executionContext) unmarshalInputApproachDetailInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
-			it.Category, err = ec.unmarshalNApproachDetailCategory2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailCategory(ctx, v)
+			it.Category, err = ec.unmarshalNApproachDetailCategory2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailCategory(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5106,7 +5124,7 @@ func (ec *executionContext) unmarshalInputApproachInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detailList"))
-			it.DetailList, err = ec.unmarshalNApproachDetailInput2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailInputᚄ(ctx, v)
+			it.DetailList, err = ec.unmarshalNApproachDetailInput2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5292,16 +5310,16 @@ func (ec *executionContext) _SearchResultItem(ctx context.Context, sel ast.Selec
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.Task:
+	case models.Task:
 		return ec._Task(ctx, sel, &obj)
-	case *model.Task:
+	case *models.Task:
 		if obj == nil {
 			return graphql.Null
 		}
 		return ec._Task(ctx, sel, obj)
-	case model.Approach:
+	case models.Approach:
 		return ec._Approach(ctx, sel, &obj)
-	case *model.Approach:
+	case *models.Approach:
 		if obj == nil {
 			return graphql.Null
 		}
@@ -5317,7 +5335,7 @@ func (ec *executionContext) _SearchResultItem(ctx context.Context, sel ast.Selec
 
 var approachImplementors = []string{"Approach", "SearchResultItem"}
 
-func (ec *executionContext) _Approach(ctx context.Context, sel ast.SelectionSet, obj *model.Approach) graphql.Marshaler {
+func (ec *executionContext) _Approach(ctx context.Context, sel ast.SelectionSet, obj *models.Approach) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, approachImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -5330,49 +5348,88 @@ func (ec *executionContext) _Approach(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Approach_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "content":
 
 			out.Values[i] = ec._Approach_content(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
+			field := field
 
-			out.Values[i] = ec._Approach_author(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Approach_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "detailList":
+			field := field
 
-			out.Values[i] = ec._Approach_detailList(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Approach_detailList(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "voteCount":
 
 			out.Values[i] = ec._Approach_voteCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "task":
+			field := field
 
-			out.Values[i] = ec._Approach_task(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Approach_task(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._Approach_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5496,7 +5553,7 @@ func (ec *executionContext) _ApproachVotePayload(ctx context.Context, sel ast.Se
 
 var meImplementors = []string{"Me"}
 
-func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *model.Me) graphql.Marshaler {
+func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *models.Me) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, meImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -5509,7 +5566,7 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			out.Values[i] = ec._Me_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "username":
 
@@ -5520,15 +5577,28 @@ func (ec *executionContext) _Me(ctx context.Context, sel ast.SelectionSet, obj *
 			out.Values[i] = ec._Me_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "taskList":
+			field := field
 
-			out.Values[i] = ec._Me_taskList(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Me_taskList(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5747,7 +5817,7 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 
 var taskImplementors = []string{"Task", "SearchResultItem"}
 
-func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *model.Task) graphql.Marshaler {
+func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *models.Task) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, taskImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -5760,49 +5830,75 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Task_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "content":
 
 			out.Values[i] = ec._Task_content(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "tags":
 
 			out.Values[i] = ec._Task_tags(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "approachList":
+			field := field
 
-			out.Values[i] = ec._Task_approachList(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_approachList(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "approachCount":
 
 			out.Values[i] = ec._Task_approachCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "author":
+			field := field
 
-			out.Values[i] = ec._Task_author(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._Task_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6268,11 +6364,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNApproach2gogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx context.Context, sel ast.SelectionSet, v model.Approach) graphql.Marshaler {
+func (ec *executionContext) marshalNApproach2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx context.Context, sel ast.SelectionSet, v models.Approach) graphql.Marshaler {
 	return ec._Approach(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNApproach2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Approach) graphql.Marshaler {
+func (ec *executionContext) marshalNApproach2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproachᚄ(ctx context.Context, sel ast.SelectionSet, v []models.Approach) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6296,7 +6392,7 @@ func (ec *executionContext) marshalNApproach2ᚕᚖgogoᚑgraphqlᚋgraphᚋmode
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx, sel, v[i])
+			ret[i] = ec.marshalNApproach2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6316,7 +6412,7 @@ func (ec *executionContext) marshalNApproach2ᚕᚖgogoᚑgraphqlᚋgraphᚋmode
 	return ret
 }
 
-func (ec *executionContext) marshalNApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx context.Context, sel ast.SelectionSet, v *model.Approach) graphql.Marshaler {
+func (ec *executionContext) marshalNApproach2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx context.Context, sel ast.SelectionSet, v *models.Approach) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6326,7 +6422,11 @@ func (ec *executionContext) marshalNApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodel�
 	return ec._Approach(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNApproachDetail2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ApproachDetail) graphql.Marshaler {
+func (ec *executionContext) marshalNApproachDetail2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetail(ctx context.Context, sel ast.SelectionSet, v model.ApproachDetail) graphql.Marshaler {
+	return ec._ApproachDetail(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNApproachDetail2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ApproachDetail) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6350,7 +6450,7 @@ func (ec *executionContext) marshalNApproachDetail2ᚕᚖgogoᚑgraphqlᚋgraph�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNApproachDetail2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetail(ctx, sel, v[i])
+			ret[i] = ec.marshalNApproachDetail2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetail(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6370,36 +6470,31 @@ func (ec *executionContext) marshalNApproachDetail2ᚕᚖgogoᚑgraphqlᚋgraph�
 	return ret
 }
 
-func (ec *executionContext) marshalNApproachDetail2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetail(ctx context.Context, sel ast.SelectionSet, v *model.ApproachDetail) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ApproachDetail(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNApproachDetailCategory2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailCategory(ctx context.Context, v interface{}) (model.ApproachDetailCategory, error) {
+func (ec *executionContext) unmarshalNApproachDetailCategory2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailCategory(ctx context.Context, v interface{}) (model.ApproachDetailCategory, error) {
 	var res model.ApproachDetailCategory
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNApproachDetailCategory2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailCategory(ctx context.Context, sel ast.SelectionSet, v model.ApproachDetailCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNApproachDetailCategory2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailCategory(ctx context.Context, sel ast.SelectionSet, v model.ApproachDetailCategory) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNApproachDetailInput2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailInputᚄ(ctx context.Context, v interface{}) ([]*model.ApproachDetailInput, error) {
+func (ec *executionContext) unmarshalNApproachDetailInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailInput(ctx context.Context, v interface{}) (model.ApproachDetailInput, error) {
+	res, err := ec.unmarshalInputApproachDetailInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNApproachDetailInput2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailInputᚄ(ctx context.Context, v interface{}) ([]model.ApproachDetailInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.ApproachDetailInput, len(vSlice))
+	res := make([]model.ApproachDetailInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNApproachDetailInput2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNApproachDetailInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachDetailInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -6407,22 +6502,17 @@ func (ec *executionContext) unmarshalNApproachDetailInput2ᚕᚖgogoᚑgraphql�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNApproachDetailInput2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachDetailInput(ctx context.Context, v interface{}) (*model.ApproachDetailInput, error) {
-	res, err := ec.unmarshalInputApproachDetailInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNApproachInput2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachInput(ctx context.Context, v interface{}) (model.ApproachInput, error) {
+func (ec *executionContext) unmarshalNApproachInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachInput(ctx context.Context, v interface{}) (model.ApproachInput, error) {
 	res, err := ec.unmarshalInputApproachInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNApproachVoteInput2gogoᚑgraphqlᚋgraphᚋmodelᚐApproachVoteInput(ctx context.Context, v interface{}) (model.ApproachVoteInput, error) {
+func (ec *executionContext) unmarshalNApproachVoteInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachVoteInput(ctx context.Context, v interface{}) (model.ApproachVoteInput, error) {
 	res, err := ec.unmarshalInputApproachVoteInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAuthInput2gogoᚑgraphqlᚋgraphᚋmodelᚐAuthInput(ctx context.Context, v interface{}) (model.AuthInput, error) {
+func (ec *executionContext) unmarshalNAuthInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐAuthInput(ctx context.Context, v interface{}) (model.AuthInput, error) {
 	res, err := ec.unmarshalInputAuthInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6472,7 +6562,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNSearchResultItem2gogoᚑgraphqlᚋgraphᚋmodelᚐSearchResultItem(ctx context.Context, sel ast.SelectionSet, v model.SearchResultItem) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchResultItem2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐSearchResultItem(ctx context.Context, sel ast.SelectionSet, v model.SearchResultItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6482,7 +6572,7 @@ func (ec *executionContext) marshalNSearchResultItem2gogoᚑgraphqlᚋgraphᚋmo
 	return ec._SearchResultItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSearchResultItem2ᚕgogoᚑgraphqlᚋgraphᚋmodelᚐSearchResultItemᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SearchResultItem) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchResultItem2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐSearchResultItemᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SearchResultItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6506,7 +6596,7 @@ func (ec *executionContext) marshalNSearchResultItem2ᚕgogoᚑgraphqlᚋgraph�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSearchResultItem2gogoᚑgraphqlᚋgraphᚋmodelᚐSearchResultItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNSearchResultItem2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐSearchResultItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6573,7 +6663,11 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNTask2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTaskᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Task) graphql.Marshaler {
+func (ec *executionContext) marshalNTask2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx context.Context, sel ast.SelectionSet, v models.Task) graphql.Marshaler {
+	return ec._Task(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTask2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTaskᚄ(ctx context.Context, sel ast.SelectionSet, v []models.Task) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6597,7 +6691,7 @@ func (ec *executionContext) marshalNTask2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx, sel, v[i])
+			ret[i] = ec.marshalNTask2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6617,7 +6711,7 @@ func (ec *executionContext) marshalNTask2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐ
 	return ret
 }
 
-func (ec *executionContext) marshalNTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx context.Context, sel ast.SelectionSet, v *model.Task) graphql.Marshaler {
+func (ec *executionContext) marshalNTask2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx context.Context, sel ast.SelectionSet, v *models.Task) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6627,12 +6721,16 @@ func (ec *executionContext) marshalNTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTas
 	return ec._Task(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTaskInput2gogoᚑgraphqlᚋgraphᚋmodelᚐTaskInput(ctx context.Context, v interface{}) (model.TaskInput, error) {
+func (ec *executionContext) unmarshalNTaskInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐTaskInput(ctx context.Context, v interface{}) (model.TaskInput, error) {
 	res, err := ec.unmarshalInputTaskInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6642,7 +6740,11 @@ func (ec *executionContext) marshalNUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUse
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserError) graphql.Marshaler {
+func (ec *executionContext) marshalNUserError2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserError(ctx context.Context, sel ast.SelectionSet, v model.UserError) graphql.Marshaler {
+	return ec._UserError(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserError2ᚕgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserErrorᚄ(ctx context.Context, sel ast.SelectionSet, v []model.UserError) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6666,7 +6768,7 @@ func (ec *executionContext) marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmod
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUserError2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserError(ctx, sel, v[i])
+			ret[i] = ec.marshalNUserError2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserError(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6686,17 +6788,7 @@ func (ec *executionContext) marshalNUserError2ᚕᚖgogoᚑgraphqlᚋgraphᚋmod
 	return ret
 }
 
-func (ec *executionContext) marshalNUserError2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserError(ctx context.Context, sel ast.SelectionSet, v *model.UserError) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UserError(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUserInput2gogoᚑgraphqlᚋgraphᚋmodelᚐUserInput(ctx context.Context, v interface{}) (model.UserInput, error) {
+func (ec *executionContext) unmarshalNUserInput2gogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserInput(ctx context.Context, v interface{}) (model.UserInput, error) {
 	res, err := ec.unmarshalInputUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6954,21 +7046,21 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOApproach2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproach(ctx context.Context, sel ast.SelectionSet, v *model.Approach) graphql.Marshaler {
+func (ec *executionContext) marshalOApproach2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐApproach(ctx context.Context, sel ast.SelectionSet, v *models.Approach) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Approach(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOApproachPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachPayload(ctx context.Context, sel ast.SelectionSet, v *model.ApproachPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOApproachPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachPayload(ctx context.Context, sel ast.SelectionSet, v *model.ApproachPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ApproachPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOApproachVotePayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐApproachVotePayload(ctx context.Context, sel ast.SelectionSet, v *model.ApproachVotePayload) graphql.Marshaler {
+func (ec *executionContext) marshalOApproachVotePayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐApproachVotePayload(ctx context.Context, sel ast.SelectionSet, v *model.ApproachVotePayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7001,7 +7093,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOMe2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐMe(ctx context.Context, sel ast.SelectionSet, v *model.Me) graphql.Marshaler {
+func (ec *executionContext) marshalOMe2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐMe(ctx context.Context, sel ast.SelectionSet, v *models.Me) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7024,28 +7116,28 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTask2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTask(ctx context.Context, sel ast.SelectionSet, v *model.Task) graphql.Marshaler {
+func (ec *executionContext) marshalOTask2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelsᚐTask(ctx context.Context, sel ast.SelectionSet, v *models.Task) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Task(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTaskPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐTaskPayload(ctx context.Context, sel ast.SelectionSet, v *model.TaskPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOTaskPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐTaskPayload(ctx context.Context, sel ast.SelectionSet, v *model.TaskPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TaskPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserPayload2ᚖgogoᚑgraphqlᚋgraphᚋmodelᚐUserPayload(ctx context.Context, sel ast.SelectionSet, v *model.UserPayload) graphql.Marshaler {
+func (ec *executionContext) marshalOUserPayload2ᚖgogoᚑgraphqlᚋappᚋtaskᚋgraphᚋmodelᚐUserPayload(ctx context.Context, sel ast.SelectionSet, v *model.UserPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -1,10 +1,10 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - graph/*.graphqls
+  - app/task/graph/*.graphqls
 
 # Where should the generated server code go?
 exec:
-  filename: graph/generated/generated.go
+  filename: app/task/graph/generated/generated.go
   package: generated
 
 # Uncomment to enable federation
@@ -14,24 +14,27 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: graph/model/models_gen.go
+  filename: app/task/graph/model/models_gen.go
   package: model
 
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: graph
+  dir: app/task/graph
   package: graph
+  filename_template: "{name}.resolvers.go"
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 # struct_tag: json
 
 # Optional: turn on to use []Thing instead of []*Thing
 # omit_slice_element_pointers: false
+omit_slice_element_pointers: true
 
 # Optional: turn off to make struct-type struct fields not use pointers
 # e.g. type Thing struct { FieldA OtherThing } instead of { FieldA *OtherThing }
 # struct_fields_always_pointers: true
+struct_fields_always_pointers: false
 
 # Optional: turn off to make resolvers return values instead of pointers for structs
 # resolvers_always_return_pointers: true
@@ -42,7 +45,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-#  - "gogo-graphql/graph/model"
+ - "gogo-graphql/app/task/graph/models"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -61,3 +64,27 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Approach:
+    model:
+      - "gogo-graphql/app/task/graph/models.Approach"
+    fields:
+      author:
+        resolver: true
+      detailList:
+        resolver: true
+      task:
+        resolver: true
+  Task:
+    model:
+      - "gogo-graphql/app/task/graph/models.Task"
+    fields:
+      author:
+        resolver: true
+      approachList:
+        resolver: true
+  Me:
+    model:
+      - "gogo-graphql/app/task/graph/models.Me"
+    fields:
+      taskList:
+        resolver: true
