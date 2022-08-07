@@ -12,8 +12,8 @@ import (
 )
 
 // Author is the resolver for the author field.
-func (r *approachResolver) Author(ctx context.Context, obj *models.Approach) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *approachResolver) Author(ctx context.Context, obj *models.Approach) (*models.User, error) {
+	return GetUserLoader(ctx).Load(obj.ID)
 }
 
 // DetailList is the resolver for the detailList field.
@@ -87,8 +87,8 @@ func (r *taskResolver) ApproachList(ctx context.Context, obj *models.Task) ([]mo
 }
 
 // Author is the resolver for the author field.
-func (r *taskResolver) Author(ctx context.Context, obj *models.Task) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *taskResolver) Author(ctx context.Context, obj *models.Task) (*models.User, error) {
+	return GetUserLoader(ctx).Load(obj.ID)
 }
 
 // Approach returns generated.ApproachResolver implementation.

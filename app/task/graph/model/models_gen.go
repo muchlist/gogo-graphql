@@ -60,12 +60,6 @@ type TaskPayload struct {
 	Task   *models.Task `json:"task"`
 }
 
-type User struct {
-	ID       string  `json:"id"`
-	Username *string `json:"username"`
-	Name     string  `json:"name"`
-}
-
 type UserError struct {
 	Message string `json:"message"`
 }
@@ -79,9 +73,9 @@ type UserInput struct {
 }
 
 type UserPayload struct {
-	Errors    []UserError `json:"errors"`
-	User      *User       `json:"user"`
-	AuthToken *string     `json:"authToken"`
+	Errors    []UserError  `json:"errors"`
+	User      *models.User `json:"user"`
+	AuthToken *string      `json:"authToken"`
 }
 
 type ApproachDetailCategory string
